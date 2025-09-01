@@ -136,7 +136,7 @@ public class PlutoNatives implements LuaNatives {
             if (loaded.get() != null) { return; }
             try {
                 GlobalLibraryLoader.register(PlutoNatives.class, false);
-                String file = GlobalLibraryLoader.load("pluto");
+                String file = GlobalLibraryLoader.load("lua54");
                 if (initBindings() != 0) {
                     throw new RuntimeException("Unable to init bindings");
                 }

@@ -149,12 +149,13 @@ buildLuaTargets(
                  'BUILDMODE=static',
                  'CROSS=aarch64-w64-mingw32-', 'TARGET_SYS=Windows']),
         addplutoTarget(Platform.MacOsX,
-                ['make',  'TARGET_FLAGS=-arch x86_64',
+                ['make', 'TARGET_FLAGS=-arch x86_64',
                  'CFLAGS=-fPIC', 'TARGET_SYS=Darwin']),
         addplutoTarget(Platform.MacOsXAArch64,
-                ['make',  'TARGET_FLAGS=-arch arm64',
+                ['make', 'TARGET_FLAGS=-arch arm64',
                  'CFLAGS=-fPIC', 'TARGET_SYS=Darwin']),
 )
+
 
 void linkerConfig(BuildTarget it, Platform platform) {
     // TODO: decide whether to shell-string-escape-and-then-xml-entity-escape $projectDir
@@ -162,6 +163,12 @@ void linkerConfig(BuildTarget it, Platform platform) {
     if (it.os == Os.Linux) {
         it.cFlags += ' -D_FORTIFY_SOURCE=0 '
         it.cppFlags += ' -D_FORTIFY_SOURCE=0 '
+    }
+
+    if (it.os == Os.Windows) {
+        print("hegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsfhegjsdgodsfsidfdsf")
+        // Add required Windows libraries
+        it.linkerFlags += " -lws2_32 -lwinmm "
     }
 }
 
