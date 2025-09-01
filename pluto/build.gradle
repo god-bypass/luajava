@@ -198,12 +198,18 @@ jnigen {
     })
 
     add(Windows, x32, x86, {
+        it.libraries += "-lbcrypt -lws2_32 -liphlpapi"
+
         linkerConfig(it, Platform.Win32)
     })
     add(Windows, x64, x86, {
+        it.libraries += "-lbcrypt -lws2_32 -liphlpapi"
+
         linkerConfig(it, Platform.Win64)
     })
     add(Windows, x64, ARM) {
+        it.libraries += "-lbcrypt -lws2_32 -liphlpapi"
+
         linkerConfig(it, Platform.WinAArch64)
     }
 
