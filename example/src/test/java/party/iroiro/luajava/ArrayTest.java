@@ -1,7 +1,7 @@
 package party.iroiro.luajava;
 
 import org.junit.jupiter.api.Test;
-import party.iroiro.luajava.lua51.Lua51;
+import party.iroiro.luajava.pluto.Pluto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static party.iroiro.luajava.LuaTestSuite.assertThrowsLua;
@@ -9,7 +9,7 @@ import static party.iroiro.luajava.LuaTestSuite.assertThrowsLua;
 public class ArrayTest {
     @Test
     public void arrayTest() {
-        try (Lua L = new Lua51()) {
+        try (Lua L = new Pluto()) {
             int[] i = new int[]{1, 2, 3, 4};
             L.pushJavaArray(i);
             L.setGlobal("i");

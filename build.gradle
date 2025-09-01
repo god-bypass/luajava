@@ -50,6 +50,7 @@ tasks.register('allJavadoc', Javadoc) {
             'luajit',
             'luaj',
             'luajava',
+            'pluto'
     ]
     source subprojects
             .findAll { projects.contains(it.name) }

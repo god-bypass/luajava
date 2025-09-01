@@ -11,4 +11,5 @@ include ':luajava',
         ':example:suite',
         ':jpms-example',
         ':android',
-        ':android:android-test'
+        ':android:android-test',
+        ':pluto'

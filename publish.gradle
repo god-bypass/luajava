@@ -6,7 +6,8 @@ configure([
         project(':lua54'),
         project(':luajit'),
         project(':luaj'),
-        project(':jsr223')
+        project(':jsr223'),
+        project(':pluto')
 ]) {
     apply plugin: 'maven-publish'
     apply plugin: 'signing'

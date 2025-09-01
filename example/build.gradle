@@ -38,6 +38,7 @@ dependencies {
     implementation project(':lua54')
     implementation project(':luajit')
     implementation project(':luaj')
+    implementation project(':pluto')
     implementation 'com.github.wagyourtail.luaj:luaj-core:f062b53a34'
     implementation project(':example:suite')
     implementation project(path: ':lua51', configuration: 'desktopNatives')
@@ -45,6 +46,8 @@ dependencies {
     implementation project(path: ':lua53', configuration: 'desktopNatives')
     implementation project(path: ':lua54', configuration: 'desktopNatives')
     implementation project(path: ':luajit', configuration: 'desktopNatives')
+    implementation project(path: ':pluto', configuration: 'desktopNatives')
+
     implementation 'info.picocli:picocli:4.7.6'
     implementation 'org.antlr:antlr4-runtime:4.13.0'
     implementation "org.jline:jline-reader:$jlineVersion"

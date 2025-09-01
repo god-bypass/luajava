@@ -1,0 +1,323 @@
+import com.badlogic.gdx.jnigen.BuildTarget
+import com.badlogic.gdx.utils.Os
+
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.badlogicgames.gdx:gdx-jnigen-gradle:2.5.2'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+group = rootProject.group
+version = rootProject.version
+
+configurations {
+    desktopNatives {
+        canBeConsumed = true
+        canBeResolved = false
+    }
+
+    instrumentedJars {
+        canBeConsumed = true
+        canBeResolved = false
+        extendsFrom api, implementation, runtimeOnly
+    }
+}
+
+dependencies {
+    api project(':luajava')
+}
+
+enum Platform {
+    Android,
+    IOS,
+    // Linux
+    Linux64,
+    Linux32,
+    ARM,
+    AArch64,
+    // Windows
+    Win32,
+    Win64,
+    WinAArch64,
+    // MacOsX
+    MacOsX,
+    MacOsXAArch64,
+    MacOsXMerged, // Merged libpluto.a
+}
+
+// Builds pluto and copies the output libpluto.a to jni/pluto/lib/${platform}
+// libpluto.a will be used in linkerConfig
+String addplutoTarget(Platform platform, List<String> command) {
+    String name = platform.toString()
+    String target = "buildLua${name}"
+    String folder = "jni/pluto/lib/${name.toLowerCase()}"
+    tasks.register(target) {
+        if (command.get(0) == 'make') {
+            doLast {
+                exec {
+                    workingDir 'jni/pluto'
+                    commandLine 'make', 'clean'
+                }
+                delete {
+                    delete fileTree('jni/pluto/src') {
+                        include 'libpluto*a'
+                    }
+                }
+                exec {
+                    workingDir 'jni/pluto'
+                    commandLine command
+                }
+                copy {
+                    from('./jni/pluto/src') {
+                        include 'libpluto*a'
+                    }
+                    into folder
+                    rename '(.+)', 'libpluto.a'
+                }
+            }
+        } else {
+            doLast {
+                exec {
+                    workingDir 'jni/pluto'
+                    commandLine command
+                }
+            }
+        }
+    }
+    return target
+}
+
+void buildLuaTargets(String... targets) {
+    tasks.register('buildLua') {
+        dependsOn targets
+    }
+    // disabling concurrency
+    for (int i = 0; i < targets.length - 1; ++i) {
+        for (int j = i + 1; j < targets.length; ++j) {
+            tasks.getByName(targets[j]).mustRunAfter(tasks.getByName(targets[i]))
+        }
+    }
+}
+
+buildLuaTargets(
+        addplutoTarget(Platform.Android,
+                ['bash', '../scripts/build-android.sh']),
+        addplutoTarget(Platform.IOS,
+                ['bash', '../scripts/build-ios.sh']),
+        addplutoTarget(Platform.Linux64,
+                ['make',
+                 'CC=gcc -m64 -D_FORTIFY_SOURCE=0', 'CFLAGS=-fPIC ',
+                 'TARGET_SYS=Linux']),
+        addplutoTarget(Platform.Linux32,
+                ['make',
+                 'CC=gcc -m32 -I/usr/i686-linux-gnu/include -D_FORTIFY_SOURCE=0', 'CFLAGS=-fPIC',
+                 'TARGET_SYS=Linux']),
+        addplutoTarget(Platform.ARM,
+                ['make',
+                 'HOST_CC=gcc -m32 -I/usr/i686-linux-gnu/include -D_FORTIFY_SOURCE=0', 'CFLAGS=-fPIC',
+                 'TARGET_SYS=Linux', 'CROSS=arm-linux-gnueabihf-']),
+        addplutoTarget(Platform.AArch64,
+                ['make',
+                 'HOST_CC=gcc -m64 -D_FORTIFY_SOURCE=0', 'CFLAGS=-fPIC',
+                 'TARGET_SYS=Linux', 'CROSS=aarch64-linux-gnu-']),
+        addplutoTarget(Platform.Win32,
+                ['make',
+                 'HOST_CC=gcc -m32 -I/usr/i686-linux-gnu/include', 'CFLAGS=-fPIC',
+                 'BUILDMODE=static',
+                 'CROSS=i686-w64-mingw32-', 'TARGET_SYS=Windows']),
+        addplutoTarget(Platform.Win64,
+                ['make',
+                 'HOST_CC=gcc -m64', 'CFLAGS=-fPIC',
+                 'BUILDMODE=static',
+                 'CROSS=x86_64-w64-mingw32-', 'TARGET_SYS=Windows']),
+        addplutoTarget(Platform.WinAArch64,
+                ['make',
+                 'HOST_CC=gcc -m64', 'CFLAGS=-fPIC',
+                 'BUILDMODE=static',
+                 'CROSS=aarch64-w64-mingw32-', 'TARGET_SYS=Windows']),
+        addplutoTarget(Platform.MacOsX,
+                ['make',  'TARGET_FLAGS=-arch x86_64',
+                 'CFLAGS=-fPIC', 'TARGET_SYS=Darwin']),
+        addplutoTarget(Platform.MacOsXAArch64,
+                ['make',  'TARGET_FLAGS=-arch arm64',
+                 'CFLAGS=-fPIC', 'TARGET_SYS=Darwin']),
+)
+
+void linkerConfig(BuildTarget it, Platform platform) {
+    // TODO: decide whether to shell-string-escape-and-then-xml-entity-escape $projectDir
+    it.linkerFlags += " -L&quot;$projectDir/jni/pluto/lib/${platform.toString().toLowerCase()}&quot; "
+    if (it.os == Os.Linux) {
+        it.cFlags += ' -D_FORTIFY_SOURCE=0 '
+        it.cppFlags += ' -D_FORTIFY_SOURCE=0 '
+    }
+}
+
+apply plugin: 'com.badlogicgames.gdx.gdx-jnigen'
+
+jnigen {
+    sharedLibName = 'pluto'
+
+    all {
+        cppExcludes = ['pluto/src/luac.cpp', 'pluto/src/lua.cpp']
+        // keep other pluto CPP files included
+        cExcludes = []
+        libraries += ' -lm '
+        headerDirs = ['../../jni/luajava', 'pluto/src', 'mod']
+    }
+    add(Linux, x64, x86, {
+        linkerConfig(it, Platform.Linux64)
+    })
+    add(Linux, x32, x86, {
+        linkerConfig(it, Platform.Linux32)
+    })
+    add(Linux, x32, ARM, {
+        linkerConfig(it, Platform.ARM)
+    })
+    add(Linux, x64, ARM, {
+        linkerConfig(it, Platform.AArch64)
+    })
+
+    add(Windows, x32, x86, {
+        linkerConfig(it, Platform.Win32)
+    })
+    add(Windows, x64, x86, {
+        linkerConfig(it, Platform.Win64)
+    })
+    add(Windows, x64, ARM) {
+        linkerConfig(it, Platform.WinAArch64)
+    }
+
+    add(MacOsX, x64, x86, {
+        linkerConfig(it, Platform.MacOsXMerged)
+    })
+    add(MacOsX, x64, ARM, {
+        linkerConfig(it, Platform.MacOsXMerged)
+    })
+
+    robovm {
+        forceLinkClasses "java.lang.Class", "java.lang.Throwable", "party.iroiro.luajava.JuaAPI"
+    }
+    add(IOS, x64) {
+        xcframeworkBundleIdentifier = "party.iroiro.luajava.pluto"
+        minIOSVersion = "11.0"
+    }
+
+    add(Android) {
+        cFlags += ' -D_FORTIFY_SOURCE=1 '
+        cppFlags += ' -D_FORTIFY_SOURCE=1 '
+        androidABIs = ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64']
+        androidApplicationMk = [
+                'APP_PLATFORM := android-21',
+                'APP_CFLAGS := -D_FORTIFY_SOURCE=1 ',
+        ]
+        linkerFlags += " -L${projectDir}/jni/pluto/lib/android/\$(TARGET_ARCH_ABI) -lpluto "
+    }
+}
+
+tasks.register('buildLuaMacOsXMerge', {
+    dependsOn tasks.buildLuaMacOsX, tasks.buildLuaMacOsXAArch64
+    String pathX86 = "lib/${Platform.MacOsX.toString().toLowerCase()}"
+    String pathAArch64 = "lib/${Platform.MacOsXAArch64.toString().toLowerCase()}"
+    String pathA = "lib/${Platform.MacOsXMerged.toString().toLowerCase()}"
+    doLast {
+        exec {
+            workingDir 'jni/pluto'
+            commandLine 'mkdir', '-p', pathA
+        }
+        exec {
+            workingDir 'jni/pluto'
+            commandLine 'lipo', '-create',
+                    "${pathX86}/libpluto.a", "${pathAArch64}/libpluto.a",
+                    '-output', "${pathA}/libpluto.a"
+        }
+    }
+})
+
+tasks.jnigenBuildLinux.dependsOn(tasks.buildLuaLinux32)
+tasks.jnigenBuildLinux64.dependsOn(tasks.buildLuaLinux64)
+tasks.jnigenBuildLinuxARM.dependsOn(tasks.buildLuaARM)
+tasks.jnigenBuildLinuxARM64.dependsOn(tasks.buildLuaAArch64)
+tasks.jnigenBuildWindows.dependsOn(tasks.buildLuaWin32)
+tasks.jnigenBuildWindows64.dependsOn(tasks.buildLuaWin64)
+tasks.jnigenBuildWindowsARM64.dependsOn(tasks.buildLuaWinAArch64)
+tasks.jnigenBuildMacOsX64.dependsOn(tasks.buildLuaMacOsXMerge)
+tasks.jnigenBuildAndroid.dependsOn(tasks.buildLuaAndroid)
+tasks.jnigenBuildIOS64.dependsOn(tasks.buildLuaIOS)
+tasks.buildLuaIOS.dependsOn(tasks.jnigen)
+
+void addPatchElfTask(String platform) {
+    String target = "patchElf${platform}"
+    String folder = "libs/${platform.toLowerCase()}"
+    tasks.register(target) {
+        doLast {
+            String file = projectDir.toPath().resolve(folder).toFile().listFiles(new FilenameFilter() {
+                @Override
+                boolean accept(File file, String s) {
+                    return s.endsWith('.so')
+                }
+            })[0].toPath().toAbsolutePath().toString()
+            List<String> command = new ArrayList<>()
+            command.add('patchelf')
+            for (String symbol : ['dlclose',
+                                  'dlerror',
+                                  'dlopen',
+                                  'dlsym',
+                                  'exp',
+                                  'log',
+                                  'log2',
+                                  'pow']) {
+                command.add('--clear-symbol-version')
+                command.add(symbol)
+            }
+            command.add(file)
+            logger.lifecycle('$ patchelf --version')
+            exec {
+                workingDir folder
+                commandLine new ArrayList<>(['patchelf', '--version'])
+            }
+            logger.lifecycle('$ ' + command.join(' '))
+            exec {
+                workingDir folder
+                commandLine command
+            }
+        }
+    }
+}
+
+addPatchElfTask('Linux32')
+addPatchElfTask('Linux64')
+addPatchElfTask('LinuxARM32')
+addPatchElfTask('LinuxARM64')
+
+tasks.jnigenBuildLinux.finalizedBy(tasks.patchElfLinux32)
+tasks.jnigenBuildLinux64.finalizedBy(tasks.patchElfLinux64)
+tasks.jnigenBuildLinuxARM.finalizedBy(tasks.patchElfLinuxARM32)
+tasks.jnigenBuildLinuxARM64.finalizedBy(tasks.patchElfLinuxARM64)
+
+apply plugin: 'com.badlogicgames.gdx.gdx-jnigen'
+
+artifacts {
+    instrumentedJars(jar)
+    desktopNatives(jnigenJarNativesDesktop)
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes('Automatic-Module-Name': 'party.iroiro.luajava.pluto')
+    }
+}
+
+tasks.jnigen.dependsOn(tasks.build)

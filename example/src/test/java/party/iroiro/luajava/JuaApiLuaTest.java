@@ -1,7 +1,7 @@
 package party.iroiro.luajava;
 
 import org.junit.jupiter.api.Test;
-import party.iroiro.luajava.lua51.Lua51;
+import party.iroiro.luajava.pluto.Pluto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static party.iroiro.luajava.LuaTestSuite.assertThrowsLua;
@@ -16,7 +16,7 @@ import static party.iroiro.luajava.LuaTestSuite.assertThrowsLua;
 public class JuaApiLuaTest {
     @Test
     public void juaApiLuaTest() {
-        try (Lua L = new Lua51()) {
+        try (Lua L = new Pluto()) {
             L.register("jfun", (l, args) -> null);
             L.openLibraries();
             L.register("juafun", (l, args) -> null);
