@@ -43,15 +43,17 @@ since this library is more or less just a thin wrapper and requires some basic u
 
 <div style="display:flex;justify-content:center">
 
-| Lua 5.1 | Lua 5.2 | Lua 5.3 | Lua 5.4 | LuaJIT      |    LuaJ     |
-|:-------:|:-------:|:-------:|:-------:|:-----------:|:-----------:|
-| 5.1.5   | 5.2.4   | 5.3.6   | 5.4.6   | [`ae4735f`] | [LuaJ fork] |
+| Lua 5.1 | Lua 5.2 | Lua 5.3 | Lua 5.4 | LuaJIT      |    LuaJ     |    Pluto    |
+|:-------:|:-------:|:-------:|:-------:|:-----------:|:-----------:|:-----------:|
+| 5.1.5   | 5.2.4   | 5.3.6   | 5.4.6   | [`ae4735f`] | [LuaJ fork] |   [Pluto]   |
 
 </div>
 
 [`ae4735f`]: https://github.com/LuaJIT/LuaJIT/commits/ae4735f621d89d84758769b76432d2319dda9827
 
 [LuaJ fork]: https://github.com/wagyourtail/luaj
+
+[Pluto]: https://github.com/PlutoLang/Pluto
 
 Supported platforms: **Windows**, **Linux**, **MacOS** and **Android**. Compiled against both ARM and x32/x64. Binaries are not yet tested for iOS.
 
