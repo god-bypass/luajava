@@ -13,19 +13,45 @@ static inline void luaJ_openlib_call(lua_State * L, const char * libName, lua_CF
     lua_pop(L, 1);
 }
 
-luaL_Reg allAvailableLibs[] = {
+static const luaL_Reg allAvailableLibs[] = {
+    /* Standard Lua libraries */
     { "",          luaopen_base },
     { "_G",        luaopen_base },
-    { "package",   luaopen_package },
-    { "coroutine", luaopen_coroutine },
-    { "string",    luaopen_string },
-    { "table",     luaopen_table },
-    { "utf8",      luaopen_utf8 },
-    { "math",      luaopen_math },
-    { "io",        luaopen_io },
-    { "os",        luaopen_os },
-    { "debug",     luaopen_debug },
-    { NULL,        NULL },
+    { LUA_LOADLIBNAME,   luaopen_package },
+    { LUA_COLIBNAME,     luaopen_coroutine },
+    { LUA_STRLIBNAME,    luaopen_string },
+    { LUA_TABLIBNAME,    luaopen_table },
+    { LUA_UTF8LIBNAME,   luaopen_utf8 },
+    { LUA_MATHLIBNAME,   luaopen_math },
+    { LUA_IOLIBNAME,     luaopen_io },
+    { LUA_OSLIBNAME,     luaopen_os },
+    { LUA_DBLIBNAME,     luaopen_debug },
+
+    /* Pluto libraries */
+    { PLUTO_CRYPTOLIBNAME,    luaopen_crypto },
+    { PLUTO_JSONLIBNAME,      luaopen_json },
+    { PLUTO_BASE32LIBNAME,    luaopen_base32 },
+    { PLUTO_BASE64LIBNAME,    luaopen_base64 },
+    { PLUTO_ASSERTLIBNAME,    luaopen_assert },
+    { PLUTO_VECTOR3LIBNAME,   luaopen_vector3 },
+    { PLUTO_URLLIBNAME,       luaopen_url },
+    { PLUTO_STARLIBNAME,      luaopen_star },
+    { PLUTO_CATLIBNAME,       luaopen_cat },
+    { PLUTO_HTTPLIBNAME,      luaopen_http },
+    { PLUTO_SCHEDULERLIBNAME, luaopen_scheduler },
+    { PLUTO_BIGINTLIBNAME,    luaopen_bigint },
+    { PLUTO_XMLLIBNAME,       luaopen_xml },
+    { PLUTO_REGEXLIBNAME,     luaopen_regex },
+    { PLUTO_FFILIBNAME,       luaopen_ffi },
+    { PLUTO_CANVASLIBNAME,    luaopen_canvas },
+    { PLUTO_BUFFERLIBNAME,    luaopen_buffer },
+
+#ifndef __EMSCRIPTEN__
+    { PLUTO_SOCKETLIBNAME,    luaopen_socket },
+#endif
+
+    /* Sentinel */
+    { NULL, NULL }
 };
 
 static void luaJ_openlib(lua_State * L, const char * libName) {
